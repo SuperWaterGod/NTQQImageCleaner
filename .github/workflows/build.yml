@@ -1,0 +1,84 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置 Python 环境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller rich
+
+    - name: 使用 PyInstaller 打包
+      run: |
+        pyinstaller --onefile --name ntqq-image-cleaner --icon=NONE --console main.py
+
+    - name: 上传构建产物
+      uses: actions/upload-artifact@v4
+      with:
+        name: ntqq-image-cleaner-windows
+        path: dist/ntqq-image-cleaner.exe
+        retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 下载构建产物
+      uses: actions/download-artifact@v4
+      with:
+        name: ntqq-image-cleaner-windows
+        path: dist/
+
+    - name: 创建 Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/ntqq-image-cleaner.exe
+        body: |
+          ## NTQQ 图片缓存清理工具 ${{ github.ref_name }}
+          
+          ### 更新内容
+          - 请在此处添加本次更新的具体内容
+          
+          ### 使用方法
+          1. 下载 `ntqq-image-cleaner.exe`
+          2. 将程序放到 NTQQ 缓存目录（或任何需要清理的目录）
+          3. 双击运行，按提示操作
+          
+          ### 系统要求
+          - Windows 10/11
+          - 无需安装 Python 环境
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
