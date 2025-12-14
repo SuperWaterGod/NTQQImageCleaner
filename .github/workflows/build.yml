@@ -23,7 +23,19 @@ jobs:
     - name: 设置 Python 环境
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.11'
+
+    - name: 获取版本号
+      id: get_version
+      shell: bash
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION="dev-$(date +'%Y%m%d')-${GITHUB_SHA::7}"
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
 
     - name: 安装依赖
       run: |
@@ -32,13 +44,19 @@ jobs:
 
     - name: 使用 PyInstaller 打包
       run: |
-        pyinstaller --onefile --name ntqq-image-cleaner --icon=NONE --console main.py
+        pyinstaller --onefile --name "ntqq-image-cleaner-${{ steps.get_version.outputs.version }}" --icon=NONE --console main.py
+
+    - name: 重命名文件（统一命名）
+      shell: bash
+      run: |
+        cd dist
+        mv ntqq-image-cleaner-${{ steps.get_version.outputs.version }}.exe ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe
 
     - name: 上传构建产物
       uses: actions/upload-artifact@v4
       with:
-        name: ntqq-image-cleaner-windows
-        path: dist/ntqq-image-cleaner.exe
+        name: ntqq-image-cleaner-${{ steps.get_version.outputs.version }}
+        path: dist/ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe
         retention-days: 30
 
   release:
@@ -53,31 +71,62 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v4
 
+    - name: 获取版本号
+      id: get_version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
     - name: 下载构建产物
       uses: actions/download-artifact@v4
       with:
-        name: ntqq-image-cleaner-windows
+        name: ntqq-image-cleaner-${{ steps.get_version.outputs.version }}
         path: dist/
+
+    - name: 生成 SHA256 校验和
+      run: |
+        cd dist
+        sha256sum ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe > ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe.sha256
 
     - name: 创建 Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          dist/ntqq-image-cleaner.exe
+          dist/ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe
+          dist/ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe.sha256
         body: |
-          ## NTQQ 图片缓存清理工具 ${{ github.ref_name }}
+          ## NTQQ 图片缓存清理工具 ${{ steps.get_version.outputs.version }}
           
-          ### 更新内容
-          - 请在此处添加本次更新的具体内容
+          ### 📦 下载
           
-          ### 使用方法
-          1. 下载 `ntqq-image-cleaner.exe`
+          - **Windows 64位**: `ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe`
+          
+          ### ✨ 更新内容
+          
+          请在此处添加本次版本的更新内容。
+          
+          ### 📝 使用方法
+          
+          1. 下载对应系统的可执行文件
           2. 将程序放到 NTQQ 缓存目录（或任何需要清理的目录）
           3. 双击运行，按提示操作
           
-          ### 系统要求
-          - Windows 10/11
+          ### 🔐 文件校验
+          
+          下载后可以使用 SHA256 校验文件完整性：
+          ```bash
+          # Windows PowerShell
+          Get-FileHash ntqq-image-cleaner-${{ steps.get_version.outputs.version }}-windows-x64.exe -Algorithm SHA256
+          ```
+          
+          ### 💻 系统要求
+          
+          - Windows 10/11 (64位)
           - 无需安装 Python 环境
+          
+          ### 📋 支持的图片格式
+          
+          JPG, PNG, GIF, BMP, TIFF, WebP, SVG, ICO
         draft: false
         prerelease: false
       env:
