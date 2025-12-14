@@ -1,7 +1,7 @@
 # NTQQ 图片缓存清理工具 🧹
 
-[![Build and Release](https://github.com/SuperWaterGod/NTQQImageCleaner/actions/workflows/build.yml/badge.svg)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/actions/workflows/build.yml)
-[![GitHub release](https://img.shields.io/github/v/release/SuperWaterGod/NTQQImageCleaner)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/releases)
+[![Build and Release](https://github.com/SuperWaterGod/NTQQImageCleaner/actions/workflows/build.yml/badge.svg)](https://github.com/SuperWaterGod/NTQQImageCleaner/actions/workflows/build.yml)
+[![GitHub release](https://img.shields.io/github/v/release/SuperWaterGod/NTQQImageCleaner)](https://github.com/SuperWaterGod/NTQQImageCleaner/releases)
 [![License](https://img.shields.io/github/license/SuperWaterGod/NTQQImageCleaner)](LICENSE)
 
 一个用于清理 NTQQ（QQ NT 版本）过期图片缓存的 Python 工具，支持按时间和文件大小筛选，帮助释放磁盘空间。
